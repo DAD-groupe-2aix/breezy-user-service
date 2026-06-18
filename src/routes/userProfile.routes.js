@@ -21,4 +21,6 @@ router.delete('/:authId', userController.deleteProfile);
 router.post('/:targetId/follow', userController.followUser);
 router.post('/:targetId/unfollow', userController.unfollowUser);
 
+// Quand un admin/modo veut changer le statut d'un utilisateur
+router.put('/:authId/status', userController.updateUserStatus);
 module.exports = router;

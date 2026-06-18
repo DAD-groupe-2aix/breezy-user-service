@@ -173,3 +173,36 @@ exports.unfollowUser = async (req, res) => {
     res.status(500).json({ message: "Erreur lors du désabonnement.", error: error.message });
   }
 };
+
+// Fx21. Modifier le statut d'un utilisateur (Modération : activer, suspendre, bannir)
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { authId } = req.params; // L'ID de l'utilisateur à modérer
+    const { status } = req.body;   // Le nouveau statut ('active', 'suspended', 'banned')
+
+    // Validation du statut envoyé
+    const validStatuses = ['active', 'suspended', 'banned'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Statut de modération invalide." });
+    }
+
+    // On cherche l'utilisateur par son authId et on met à jour son statut
+    const updatedProfile = await UserProfile.findOneAndUpdate(
+      { authId: authId },
+      { status: status },
+      { new: true } // Pour renvoyer le profil mis à jour
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ message: "Utilisateur introuvable." });
+    }
+
+    res.status(200).json({ 
+      message: `Le statut de l'utilisateur a été modifié avec succès : ${status}`, 
+      profile: updatedProfile 
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la modification du statut.", error: error.message });
+  }
+};

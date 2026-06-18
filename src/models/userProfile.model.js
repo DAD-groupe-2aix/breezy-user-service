@@ -9,6 +9,18 @@ const userProfileSchema = new mongoose.Schema({
     unique: true
   },
   
+// À ajouter dans ton schéma utilisateur existant :
+role: {
+  type: String,
+  enum: ['user', 'moderator', 'admin'],
+  default: 'user' // Par défaut, tout le monde est un utilisateur normal
+},
+status: {
+  type: String,
+  enum: ['active', 'suspended', 'banned'],
+  default: 'active' // Par défaut, le compte est actif
+},
+
   // 2. Les infos publiques (nom, bio, photo)
   username: {
     type: String,
