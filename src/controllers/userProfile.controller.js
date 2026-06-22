@@ -114,7 +114,11 @@ exports.followUser = async (req, res) => {
     
     // L'ID de l'utilisateur qui fait l'action (qui clique sur le bouton "Follow")
     // Note: Plus tard, cet ID viendra du token de sécurité. Pour le moment, on l'envoie dans le body.
-    const followerId = parseInt(req.body.followerId);
+    const followerId = parseInt(req.body.authId);
+
+    if (Number.isNaN(targetId) || Number.isNaN(followerId)) {
+      return res.status(400).json({ message: "authId requis dans le body et targetId valide dans l'URL." });
+    }
 
     if (followerId === targetId) {
       return res.status(400).json({ message: "Vous ne pouvez pas vous abonner à vous-même." });
@@ -148,7 +152,11 @@ exports.followUser = async (req, res) => {
 exports.unfollowUser = async (req, res) => {
   try {
     const targetId = parseInt(req.params.targetId);
-    const followerId = parseInt(req.body.followerId);
+    const followerId = parseInt(req.body.authId);
+
+    if (Number.isNaN(targetId) || Number.isNaN(followerId)) {
+      return res.status(400).json({ message: "authId requis dans le body et targetId valide dans l'URL." });
+    }
 
     // 1. On retire le followerId du tableau 'followers' de la cible
     const targetUser = await UserProfile.findOneAndUpdate(
