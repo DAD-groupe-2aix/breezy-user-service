@@ -14,7 +14,6 @@ router.delete('/:authId', userController.deleteProfile);
 router.post('/:targetId/follow', userController.followUser);
 router.post('/:targetId/unfollow', userController.unfollowUser);
 
-router.put('/:authId/role', requireRole('admin'), userController.updateRole);
 router.put('/:authId/status', requireRole('moderator', 'admin'), userController.updateUserStatus);
 
 module.exports = router;

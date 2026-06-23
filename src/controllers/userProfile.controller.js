@@ -186,32 +186,6 @@ exports.unfollowUser = async (req, res) => {
     res.status(500).json({ message: "Erreur lors du désabonnement.", error: error.message });
   }
 };
-// Modifier le rôle d'un utilisateur (réservé aux admins)
-exports.updateRole = async (req, res) => {
-  try {
-    const { authId } = req.params;
-    const { role } = req.body;
-
-    const validRoles = ['user', 'moderator', 'admin'];
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ message: "Rôle invalide." });
-    }
-
-    const updatedProfile = await UserProfile.findOneAndUpdate(
-      { authId },
-      { role },
-      { new: true }
-    );
-
-    if (!updatedProfile) {
-      return res.status(404).json({ message: "Utilisateur introuvable." });
-    }
-
-    res.status(200).json({ message: `Rôle mis à jour : ${role}`, profile: updatedProfile });
-  } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la mise à jour du rôle.", error: error.message });
-  }
-};
 
 // Lister tous les profils (réservé aux modérateurs/admins, pour le panel admin)
 exports.getAllProfiles = async (req, res) => {
