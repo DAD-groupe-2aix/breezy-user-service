@@ -54,9 +54,13 @@ exports.updateProfile = async (req, res) => {
   try {
     // 1. On regarde dans l'URL quel ID on veut modifier
     const idDemande = req.params.authId;
-    
-    // 2. On récupère les nouvelles informations envoyées (la nouvelle bio, etc.)
-    const modifications = req.body;
+
+    // 2. On ne garde que les champs autorisés (jamais role/status/followers via cette route générique)
+    const { username, bio, profilePicture } = req.body;
+    const modifications = {};
+    if (username !== undefined) modifications.username = username;
+    if (bio !== undefined) modifications.bio = bio;
+    if (profilePicture !== undefined) modifications.profilePicture = profilePicture;
 
     // 3. On demande à MongoDB de trouver la fiche et de la remplacer avec les nouveautés
     const profileMisAJour = await UserProfile.findOneAndUpdate(
@@ -65,15 +69,16 @@ exports.updateProfile = async (req, res) => {
       { new: true }          // L'option magique : on demande à MongoDB de nous renvoyer la fiche mise à jour (pas l'ancienne)
     );
 
+
     // 4. Si on ne trouve pas le profil
     if (!profileMisAJour) {
       return res.status(404).json({ message: "Profil introuvable !" });
     }
 
     // 5. Tout s'est bien passé
-    res.status(200).json({ 
-      message: "Profil mis à jour avec succès !", 
-      profile: profileMisAJour 
+    res.status(200).json({
+      message: "Profil mis à jour avec succès !",
+      profile: profileMisAJour
     });
 
   } catch (error) {
@@ -111,7 +116,7 @@ exports.followUser = async (req, res) => {
   try {
     // L'ID de l'utilisateur cible (celui qu'on veut suivre) est dans l'URL
     const targetId = parseInt(req.params.targetId);
-    
+
     // L'ID de l'utilisateur qui fait l'action (qui clique sur le bouton "Follow")
     // Note: Plus tard, cet ID viendra du token de sécurité. Pour le moment, on l'envoie dans le body.
     const followerId = parseInt(req.body.authId);
@@ -181,6 +186,42 @@ exports.unfollowUser = async (req, res) => {
     res.status(500).json({ message: "Erreur lors du désabonnement.", error: error.message });
   }
 };
+// Modifier le rôle d'un utilisateur (réservé aux admins)
+exports.updateRole = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const { role } = req.body;
+
+    const validRoles = ['user', 'moderator', 'admin'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: "Rôle invalide." });
+    }
+
+    const updatedProfile = await UserProfile.findOneAndUpdate(
+      { authId },
+      { role },
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ message: "Utilisateur introuvable." });
+    }
+
+    res.status(200).json({ message: `Rôle mis à jour : ${role}`, profile: updatedProfile });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la mise à jour du rôle.", error: error.message });
+  }
+};
+
+// Lister tous les profils (réservé aux modérateurs/admins, pour le panel admin)
+exports.getAllProfiles = async (req, res) => {
+  try {
+    const profiles = await UserProfile.find().sort({ authId: 1 });
+    res.status(200).json(profiles);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la récupération des profils.", error: error.message });
+  }
+};
 
 // Fx21. Modifier le statut d'un utilisateur (Modération : activer, suspendre, bannir)
 exports.updateUserStatus = async (req, res) => {
@@ -205,9 +246,9 @@ exports.updateUserStatus = async (req, res) => {
       return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
-    res.status(200).json({ 
-      message: `Le statut de l'utilisateur a été modifié avec succès : ${status}`, 
-      profile: updatedProfile 
+    res.status(200).json({
+      message: `Le statut de l'utilisateur a été modifié avec succès : ${status}`,
+      profile: updatedProfile
     });
 
   } catch (error) {
