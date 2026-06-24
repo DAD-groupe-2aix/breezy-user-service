@@ -8,6 +8,7 @@ router.post('/', userController.createProfile);
 router.get('/', requireRole('moderator', 'admin'), userController.getAllProfiles);
 
 router.get('/:authId', userController.getProfile);
+router.get('/username/:username', userController.getProfileByUsername);
 router.put('/:authId', userController.updateProfile);
 router.delete('/:authId', userController.deleteProfile);
 

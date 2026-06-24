@@ -54,6 +54,21 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// On cherche un profil par son pseudo (utilisé par auth-service pour la connexion par pseudo)
+exports.getProfileByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const profile = await UserProfile.findOne({ username });
+    if (!profile) {
+      return res.status(404).json({ message: "Profil introuvable." });
+    }
+    res.status(200).json(profile);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
+  }
+};
+
+
 exports.updateProfile = async (req, res) => {
   try {
     // 1. On regarde dans l'URL quel ID on veut modifier
