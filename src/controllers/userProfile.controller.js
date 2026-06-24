@@ -1,16 +1,17 @@
 // On importe notre modèle (la fiche vide)
 const UserProfile = require('../models/userProfile.model');
 
-// On crée la fonction pour enregistrer un profil
 exports.createProfile = async (req, res) => {
   try {
     // 1. On récupère les infos envoyées par l'utilisateur
-    const { authId, username } = req.body;
+    const { authId, username, birthdate, profilePicture } = req.body;
 
     // 2. On remplit une nouvelle fiche
     const newProfile = new UserProfile({
-      authId: authId,
-      username: username
+      authId,
+      username,
+      ...(birthdate ? { birthdate } : {}),
+      ...(profilePicture ? { profilePicture } : {}),
     });
 
     // 3. On range la fiche dans le tiroir MongoDB
@@ -20,10 +21,15 @@ exports.createProfile = async (req, res) => {
     res.status(201).json({ message: "Profil créé avec succès !", profile: newProfile });
 
   } catch (error) {
-    // S'il y a un problème (ex: le nom existe déjà), on renvoie une erreur
+    // Pseudo déjà pris (contrainte d'unicité MongoDB)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      return res.status(409).json({ message: field === 'username' ? "Ce pseudo est déjà pris." : "Ce compte existe déjà." });
+    }
     res.status(400).json({ message: "Erreur lors de la création", error: error.message });
   }
 };
+
 
 // On crée la fonction pour récupérer un profil existant
 exports.getProfile = async (req, res) => {
@@ -48,19 +54,18 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// --- NOUVELLE FONCTION ---
-// On crée la fonction pour mettre à jour un profil
 exports.updateProfile = async (req, res) => {
   try {
     // 1. On regarde dans l'URL quel ID on veut modifier
     const idDemande = req.params.authId;
 
     // 2. On ne garde que les champs autorisés (jamais role/status/followers via cette route générique)
-    const { username, bio, profilePicture } = req.body;
+    const { username, bio, profilePicture, birthdate } = req.body;
     const modifications = {};
     if (username !== undefined) modifications.username = username;
     if (bio !== undefined) modifications.bio = bio;
     if (profilePicture !== undefined) modifications.profilePicture = profilePicture;
+    if (birthdate !== undefined) modifications.birthdate = birthdate;
 
     // 3. On demande à MongoDB de trouver la fiche et de la remplacer avec les nouveautés
     const profileMisAJour = await UserProfile.findOneAndUpdate(
@@ -82,9 +87,13 @@ exports.updateProfile = async (req, res) => {
     });
 
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Ce pseudo est déjà pris." });
+    }
     res.status(500).json({ message: "Erreur lors de la mise à jour", error: error.message });
   }
 };
+
 
 // --- NOUVELLE FONCTION (Celle que tu as anticipée !) ---
 // On crée la fonction pour supprimer définitivement un profil
