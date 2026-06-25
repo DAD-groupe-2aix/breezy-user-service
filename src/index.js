@@ -9,7 +9,9 @@ app.use(express.json());
 
 // --- NOUVELLES LIGNES À AJOUTER ICI ---
 const userProfileRoutes = require('./routes/userProfile.routes');
+const notificationRoutes = require('./routes/notification.routes');
 app.use('/api/users/profile', userProfileRoutes);
+app.use('/api/users/notifications', notificationRoutes);
 
 app.get('/api/users/health', (req, res) => {
   res.status(200).json({ message: "Le User Service est en pleine forme ! 🟢" });

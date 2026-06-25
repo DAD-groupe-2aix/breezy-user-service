@@ -1,5 +1,5 @@
-// On importe notre modèle (la fiche vide)
 const UserProfile = require('../models/userProfile.model');
+const Notification = require('../models/notification.model');
 
 exports.createProfile = async (req, res) => {
   try {
@@ -169,6 +169,8 @@ exports.followUser = async (req, res) => {
       { authId: followerId },
       { $addToSet: { following: targetId } }
     );
+
+    Notification.create({ recipientId: targetId, senderId: followerId, type: 'follow' }).catch(() => {});
 
     res.status(200).json({ message: `Vous êtes maintenant abonné à l'utilisateur ${targetId}.` });
 
